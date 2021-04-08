@@ -18,8 +18,10 @@
   },
   "homepage": "https://github.com/nguyen1909/API-note#readme",
   "dependencies": {
+    "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.6",
-    "restify": "^8.5.1"
+    "restify": "^8.5.1",
+    "restify-jwt-community": "^1.1.12"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"
