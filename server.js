@@ -8,6 +8,7 @@ const restify = require('restify');
 const app = restify.createServer();
 
 const MongoClient = require("mongodb").MongoClient;
+const { ReplSet } = require('mongodb');
 
 const client = new MongoClient(process.env.MONGODB_URI, 
   {
@@ -26,6 +27,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
   }
 
   const usersCollection = client.db(process.env.DB_NAME).collection("users");
+  const notesCollection = client.db(process.env.DB_NAME).collection("notes")
 
   app.use(restify.plugins.bodyParser());
 
@@ -108,22 +110,34 @@ const client = new MongoClient(process.env.MONGODB_URI,
 
 
   app.get('/notes', async (req,res) => {
-    const docs = await db.find({}).toArray();
+    const docs = await notesCollection.find({}).toArray();
     res.send(docs);
   });
 
   app.put('/notes', async(req,res) => {
-    let user = '606f1c15fc296d902fa4f232';
+    let user = '607055146d709cb63af7aad1';
     try{
       if(user == null || user == ''){
         res.send("Utilisateur non connecté");
         res.status(401);
       } else {
-        await db.insertOne({
+        const note = {
           content: req.body.note,
           userId: user, 
           createdAt: new Date(),
           lastUpdatedAt: null
+        }
+        notesCollection.insertOne(note, function (err, newNote) {
+          if (newNote) {
+            res.json({
+              error: null,
+              note: {
+                _id: newNote.insertedId,
+                ...note
+              }
+            });
+          }
+
         });
       }
     } catch(err){
