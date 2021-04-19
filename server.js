@@ -106,6 +106,31 @@ const client = new MongoClient(process.env.MONGODB_URI,
     });
   })
 
+
+  app.get('/notes', async (req,res) => {
+    const docs = await db.find({}).toArray();
+    res.send(docs);
+  });
+
+  app.put('/notes', async(req,res) => {
+    let user = '606f1c15fc296d902fa4f232';
+    try{
+      if(user == null || user == ''){
+        res.send("Utilisateur non connecté");
+        res.status(401);
+      } else {
+        await db.insertOne({
+          content: req.body.note,
+          userId: user, 
+          createdAt: new Date(),
+          lastUpdatedAt: null
+        });
+      }
+    } catch(err){
+      console.log(err);
+    }
+  })
+
   app.listen(process.env.PORT, function() {
     console.log(`App listening on PORT ${process.env.PORT}`);
   });
