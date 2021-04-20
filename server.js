@@ -84,25 +84,49 @@ const client = new MongoClient(process.env.MONGODB_URI,
 
 
   app.post('/signin', (req, res) => {
-    const {username, password} = req.body
+    const username = req.body.username || "";
+    const password = req.body.password || "";
+
+    if (password.length < 4) {
+      return res.send(400, {
+        error: 'Le mot de passe doit contenir au moins 4 caractères'
+      });
+    }
+    if (!(/^[a-z]+$/.test(username))) {
+      return res.send(400, {
+        error: 'Votre identifiant ne doit contenir que des lettres minuscules non accentuées'
+      });
+    }
+    if (username.length < 2 || username.length > 20) {
+      return res.send(400, {
+        error: 'Votre identifiant doit contenir entre 2 et 20 caractères'
+      });
+    }
    
-    usersCollection.findOne({username}, (err, user) => {
+    usersCollection.findOne({ username }, (err, user) => {
       if (err) {
-        res.send({error: err})
+        return res.send(500, {
+          error: err
+        });
       } else {
-        if (bcrypt.compareSync(password, user.password)) { //compare le mot de passe dans le body avec le mot de passe hash de l'user stocké en BDD 
-      //     if (token) {
-            
-      //     } else {
-      //       token = jwt.sign(user, process.env.JWT_KEY, {
-      //         expiresIn: '30s'
-      //       });
-      //     }
-      //  let { iat, exp  } = jwt.decode(token);
-      //  res.json({ iat, exp, token, user: user });
-          res.json({user: user})
+        if (!user) {
+          return res.send(403, {
+            error: 'Cet identifiant est inconnu'
+          });
+        }
+
+        if (bcrypt.compareSync(password, user.password)) {
+          let token = jwt.sign(user, process.env.JWT_KEY, {
+            expiresIn: '24h'
+          });
+          return res.send(200, {
+            error: null,
+            token: token
+          });
         } else {
-          res.send("Mauvais mot de passe")
+          return res.send(400, {
+            error: 'Mot de passe invalide'
+          });
         }
     }
     });
