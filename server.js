@@ -31,6 +31,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
 
   app.use(restify.plugins.bodyParser());
 
+  // Sign up
   app.post('/signup', async (req, res) => {
     let {username, password} = req.body
     let errorMessage = null;
@@ -82,7 +83,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
     }
   })
 
-
+  // Sign in
   app.post('/signin', (req, res) => {
     const username = req.body.username || "";
     const password = req.body.password || "";
@@ -131,7 +132,8 @@ const client = new MongoClient(process.env.MONGODB_URI,
     }
     });
   })
-
+  
+  // Get notes
   app.get('/notes', async (req,res) => {
 
     let token = req.header('x-access-token');
@@ -164,6 +166,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
     
   });
 
+  // Add note
   app.put('/notes', async(req,res) => {
     
     let token = req.header('x-access-token');
@@ -208,8 +211,33 @@ const client = new MongoClient(process.env.MONGODB_URI,
     });
   });
 
+  // Delete note
+  app.del('/notes/:id', (req, res) => {
+    let token = req.header('x-access-token');
+
+    if (!token) {
+      return res.send(401, {
+        error: 'Utilisateur non connecté'
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+      if (err) {
+        return res.send(500, {
+          error: err
+        });
+      }
+      if (!decoded) {
+        return res.send(401, {
+          error: 'Utilisateur non connecté'
+        });
+      }
+
+      return res.send(200, decoded);
+    });
+  });
+
   app.listen(process.env.PORT, function() {
     console.log(`App listening on PORT ${process.env.PORT}`);
   });
-  
 })();
