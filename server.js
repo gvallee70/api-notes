@@ -8,7 +8,8 @@ const restify = require('restify');
 const app = restify.createServer();
 
 const MongoClient = require("mongodb").MongoClient;
-const { ReplSet } = require('mongodb');
+const ObjectID = require('mongodb').ObjectID;
+
 
 const client = new MongoClient(process.env.MONGODB_URI, 
   {
@@ -221,19 +222,50 @@ const client = new MongoClient(process.env.MONGODB_URI,
       });
     }
 
-    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+    jwt.verify(token, process.env.JWT_KEY,async (err, authUser) => {
       if (err) {
         return res.send(500, {
-          error: err
+          error: 'Impossible de vous authentifier'
         });
       }
-      if (!decoded) {
+      if (!authUser) {
         return res.send(401, {
           error: 'Utilisateur non connecté'
         });
       }
 
-      return res.send(200, decoded);
+      let note;
+      try {
+        const _id = new ObjectID(req.params.id)
+        note = await notesCollection.findOne({ _id: _id })
+      } catch (err) {
+        console.log(err)
+      }
+
+      if (!note) {
+        return res.send(404, { 
+          error: 'Cet identifiant est inconnu'
+        })
+      }
+
+      if (note.userId !== authUser._id) {
+        return res.send(403, { 
+          error: 'Accès non autorisé à cette note'
+        })
+      }
+
+      try {
+        await notesCollection.deleteOne({ _id: note._id });
+        return res.send(200, {
+          error: null
+        })
+      } catch(err) {
+        return res.send(500, {
+          error: 'Impossible de supprimer la note. '
+        })
+      }
+    
+
     });
   });
 
