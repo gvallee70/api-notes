@@ -132,42 +132,81 @@ const client = new MongoClient(process.env.MONGODB_URI,
     });
   })
 
-
   app.get('/notes', async (req,res) => {
-    const docs = await notesCollection.find({}).toArray();
-    res.send(docs);
+
+    let token = req.header('x-access-token');
+
+    if(!token){
+      return res.send(401, {
+        error: "Utilisateur non connecté"
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
+      if(err || !decoded){
+        return res.send(401, {
+          error: "Utilisateur non connecté"
+        });
+      }
+      let userId = decoded._id;
+      notesCollection.find({ userId: userId }).toArray((err, notes) => {
+        if(err){
+          return res.send(500, {
+            error : err
+          });
+        }
+        return res.send(200, {
+          error : null,
+          notes : notes
+        });
+      });
+    });
+    
   });
 
   app.put('/notes', async(req,res) => {
-    let user = '607055146d709cb63af7aad1';
-    try{
-      if(user == null || user == ''){
-        res.send("Utilisateur non connecté");
-        res.status(401);
-      } else {
-        const note = {
-          content: req.body.note,
-          userId: user, 
-          createdAt: new Date(),
-          lastUpdatedAt: null
-        }
-        notesCollection.insertOne(note, function (err, newNote) {
-          if (newNote) {
-            res.json({
-              error: null,
-              note: {
-                _id: newNote.insertedId,
-                ...note
-              }
-            });
-          }
+    
+    let token = req.header('x-access-token');
 
+    if(!token){
+      return res.send(401, {
+        error: "Utilisateur non connecté"
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
+      if(err || !decoded){
+        return res.send(401, {
+          error: "Utilisateur non connecté"
         });
       }
-    } catch(err){
-      console.log(err);
-    }
-  })
+      let userId = decoded._id;
+      const note = {
+        content: req.body.content ? req.body.content : null,
+        userId: userId, 
+        createdAt: new Date(),
+        lastUpdatedAt: null
+      }
+      notesCollection.insertOne(note, function (err, newNote) {
+        if(err){
+          return res.send(500, {
+            error : "Impossible de créer la note"
+          })
+        }
+        console.log(note);
+        if (newNote) {
+          res.send(200, {
+            error: null,
+            note: {
+              _id: newNote.insertedId,
+              ...note
+            }
+          });
+        }
+
+      });
+    });
+  });
 
   app.listen(process.env.PORT, function() {
     console.log(`App listening on PORT ${process.env.PORT}`);
