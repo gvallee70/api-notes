@@ -132,10 +132,30 @@ const client = new MongoClient(process.env.MONGODB_URI,
     });
   })
 
-
   app.get('/notes', async (req,res) => {
-    const docs = await notesCollection.find({}).toArray();
-    res.send(docs);
+
+    let token = req.header('x-access-token');
+
+    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
+      if(err || !decoded){
+        return res.send(401, {
+          error: "Utilisateur non connecté"
+        });
+      }
+      let userId = decoded._id;
+      notesCollection.find({ userId: userId }).toArray((err, notes) => {
+        if(err){
+          return res.send(500, {
+            error : err
+          });
+        }
+        return res.send(200, {
+          error : null,
+          notes : notes
+        });
+      });
+    });
+    
   });
 
   app.put('/notes', async(req,res) => {
