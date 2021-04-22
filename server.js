@@ -152,7 +152,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
         });
       }
       let userId = decoded._id;
-      notesCollection.find({ userId: userId }).toArray((err, notes) => {
+      notesCollection.find({ userId: userId }).sort({createdAt: -1}).toArray((err, notes) => {
         if(err){
           return res.send(500, {
             error : err
@@ -211,6 +211,75 @@ const client = new MongoClient(process.env.MONGODB_URI,
       });
     });
   });
+
+
+  //Patch note
+
+  app.patch('/notes/:id', (req,res) =>{
+    let token = req.header('x-access-token');
+
+
+    if(!token){
+      return res.send(401, {
+        error: "Utilisateur non connecté"
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_KEY, async (err,authUser) => {
+      if(err){
+        return res.send(401, {
+          error: "Utilisateur non connecté"
+        });
+      }
+
+      let note;
+      try {
+        const _id = new ObjectID(req.params.id)
+        note = await notesCollection.findOne({ _id: _id })
+      } catch (err) {
+        console.log(err)
+      }
+
+      if (!note) {
+        return res.send(404, { 
+          error: 'Cet identifiant est inconnu'
+        })
+      }
+
+      if (note.userId !== authUser._id) {
+        return res.send(403, { 
+          error: 'Accès non autorisé à cette note'
+        })
+      }
+
+      notesCollection.findOneAndUpdate({_id:note._id}, {
+        $set:{
+          content:req.body.content,
+          lastUpdatedAt:new Date()
+          }
+        },
+        {
+          returnOriginal: false
+        }, ((err, updatedNote) => {
+          if(err){
+            return res.send(500, {
+              error : "Impossible de modifier la note"
+            })
+          }
+
+          if (updatedNote) {
+            return res.send(200, {
+              error: null,
+              note: updatedNote.value          
+            });
+          }
+
+
+        }))
+    });
+
+  })
+
 
   // Delete note
   app.del('/notes/:id', (req, res) => {
