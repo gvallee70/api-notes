@@ -8,7 +8,8 @@ const restify = require('restify');
 const app = restify.createServer();
 
 const MongoClient = require("mongodb").MongoClient;
-const { ReplSet } = require('mongodb');
+const ObjectID = require('mongodb').ObjectID;
+
 
 const client = new MongoClient(process.env.MONGODB_URI, 
   {
@@ -31,6 +32,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
 
   app.use(restify.plugins.bodyParser());
 
+  // Sign up
   app.post('/signup', async (req, res) => {
     let {username, password} = req.body
     let errorMessage = null;
@@ -82,7 +84,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
     }
   })
 
-
+  // Sign in
   app.post('/signin', (req, res) => {
     const username = req.body.username || "";
     const password = req.body.password || "";
@@ -131,7 +133,8 @@ const client = new MongoClient(process.env.MONGODB_URI,
     }
     });
   })
-
+  
+  // Get notes
   app.get('/notes', async (req,res) => {
 
     let token = req.header('x-access-token');
@@ -164,6 +167,7 @@ const client = new MongoClient(process.env.MONGODB_URI,
     
   });
 
+  // Add note
   app.put('/notes', async(req,res) => {
     
     let token = req.header('x-access-token');
@@ -208,8 +212,64 @@ const client = new MongoClient(process.env.MONGODB_URI,
     });
   });
 
+  // Delete note
+  app.del('/notes/:id', (req, res) => {
+    let token = req.header('x-access-token');
+
+    if (!token) {
+      return res.send(401, {
+        error: 'Utilisateur non connecté'
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_KEY,async (err, authUser) => {
+      if (err) {
+        return res.send(500, {
+          error: 'Impossible de vous authentifier'
+        });
+      }
+      if (!authUser) {
+        return res.send(401, {
+          error: 'Utilisateur non connecté'
+        });
+      }
+
+      let note;
+      try {
+        const _id = new ObjectID(req.params.id)
+        note = await notesCollection.findOne({ _id: _id })
+      } catch (err) {
+        console.log(err)
+      }
+
+      if (!note) {
+        return res.send(404, { 
+          error: 'Cet identifiant est inconnu'
+        })
+      }
+
+      if (note.userId !== authUser._id) {
+        return res.send(403, { 
+          error: 'Accès non autorisé à cette note'
+        })
+      }
+
+      try {
+        await notesCollection.deleteOne({ _id: note._id });
+        return res.send(200, {
+          error: null
+        })
+      } catch(err) {
+        return res.send(500, {
+          error: 'Impossible de supprimer la note. '
+        })
+      }
+    
+
+    });
+  });
+
   app.listen(process.env.PORT, function() {
     console.log(`App listening on PORT ${process.env.PORT}`);
   });
-  
 })();
