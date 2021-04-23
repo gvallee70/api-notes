@@ -2,6 +2,8 @@ const database = require('./database');
 const Notes = require('./models/notes');
 const User = require('./models/user');
 
+const NotesController = require('./controllers/notes-controller');
+
 require('dotenv').config();
 const rjwt = require('restify-jwt-community');
 const jwt = require('jsonwebtoken');
@@ -70,37 +72,20 @@ const ObjectID = require('mongodb').ObjectID;
   });
   
   // Get notes
-  app.get('/notes', async (req,res) => {
-
+  app.get('/notes', (req, res) => {
     let token = req.header('x-access-token');
 
-    if(!token){
-      return res.send(401, {
-        error: "Utilisateur non connecté"
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
-      if(err || !decoded){
-        return res.send(401, {
-          error: "Utilisateur non connecté"
+    NotesController.getNotes(token, (statusCode, errorMessage, notes) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-      let userId = decoded._id;
-
-      Notes.getAll(userId, (err, notes) => {
-        if(err){
-          return res.send(500, {
-            error : err
-          });
-        }
-        return res.send(200, {
-          error : null,
-          notes : notes
-        });
+      return res.send(200, {
+        error: null,
+        notes: notes
       });
     });
-    
   });
 
   // Add note
@@ -186,19 +171,6 @@ const ObjectID = require('mongodb').ObjectID;
           });
         });
       });
-
-      // try {
-      //   const _id = new ObjectID(req.params.id)
-      //   note = await notesCollection.findOne({ _id: _id })
-      // } catch (err) {
-      //   console.log(err)
-      // }
-      //
-      // if (!note) {
-      //   return res.send(404, {
-      //     error: ''
-      //   })
-      // }
     });
   });
 
