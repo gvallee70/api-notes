@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const ObjectID = require('mongodb').ObjectID;
 require('dotenv').config();
 
 const Notes = require('../models/notes');
@@ -10,12 +11,12 @@ NotesController.getNotes = (token, callback) => {
     return callback(401, 'Utilisateur non connecté');
   }
 
-  jwt.verify(token, process.env.JWT_KEY, (error, decoded) => {
-    if (error || !decoded) {
+  jwt.verify(token, process.env.JWT_KEY, (error, authUser) => {
+    if (error || !authUser) {
       return callback(401, 'Utilisateur non connecté');
     }
 
-    let userID = decoded._id;
+    let userID = authUser._id;
 
     Notes.getAll(userID, (error, notes) => {
       if (error) {
@@ -31,12 +32,12 @@ NotesController.addNote = (token, noteContent, callback) => {
     return callback(401, 'Utilisateur non connecté');
   }
 
-  jwt.verify(token, process.env.JWT_KEY, (error, decoded) => {
-    if (error || !decoded) {
+  jwt.verify(token, process.env.JWT_KEY, (error, authUser) => {
+    if (error || !authUser) {
       return callback(401, 'Utilisateur non connecté');
     }
 
-    const userID = decoded._id;
+    const userID = authUser._id;
 
     Notes.add(noteContent, userID, (error, note) => {
       if (error) {
@@ -45,6 +46,41 @@ NotesController.addNote = (token, noteContent, callback) => {
       if (note) {
         return callback(200, null, note);
       }
+    });
+  });
+};
+
+NotesController.modifyNote = (token, noteID, noteContent, callback) => {
+  if (!token) {
+    return callback(401, 'Utilisateur non connecté');
+  }
+
+  jwt.verify(token, process.env.JWT_KEY, async (error, authUser) => {
+    if (error || !authUser) {
+      return callback(401, 'Utilisateur non connecté');
+    }
+
+    let formattedNoteID;
+    try {
+      formattedNoteID = new ObjectID(noteID);
+    } catch(error) {
+      return callback(404, 'Cet identifiant est inconnu');
+    }
+
+    Notes.get(formattedNoteID, (error, note) => {
+      if (error || !note) {
+        return callback(404, 'Cet identifiant est inconnu');
+      }
+      if (note.userId !== authUser._id) {
+        return callback(403, 'Accès non autorisé à cette note');
+      }
+
+      Notes.patch(note._id, noteContent, (error, note) => {
+        if (error || !note) {
+          return callback(500, 'Impossible de modifier la note');
+        }
+        return callback(200, null, note.value);
+      });
     });
   });
 };

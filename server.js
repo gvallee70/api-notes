@@ -73,7 +73,7 @@ const ObjectID = require('mongodb').ObjectID;
   
   // Get notes
   app.get('/notes', (req, res) => {
-    let token = req.header('x-access-token');
+    const token = req.header('x-access-token');
 
     NotesController.getNotes(token, (statusCode, errorMessage, notes) => {
       if (statusCode !== 200) {
@@ -90,8 +90,8 @@ const ObjectID = require('mongodb').ObjectID;
 
   // Add note
   app.put('/notes', (req, res) => {
-    let token = req.header('x-access-token');
-    let noteContent = req.body.content || '';
+    const token = req.header('x-access-token');
+    const noteContent = req.body.content || '';
 
     NotesController.addNote(token, noteContent, (statusCode, errorMessage, note) => {
       if (statusCode !== 200) {
@@ -108,49 +108,19 @@ const ObjectID = require('mongodb').ObjectID;
 
   // Patch note
   app.patch('/notes/:id', (req,res) =>{
-    let token = req.header('x-access-token');
+    const token = req.header('x-access-token');
+    const noteID = req.params.id;
+    const noteContent = req.body.content;
 
-    if(!token){
-      return res.send(401, {
-        error: "Utilisateur non connecté"
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY, async (err,authUser) => {
-      if(err){
-        return res.send(401, {
-          error: "Utilisateur non connecté"
+    NotesController.modifyNote(token, noteID, noteContent, (statusCode, errorMessage, note) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-
-      let noteID;
-      try {
-        noteID = new ObjectID(req.params.id);
-      } catch(error) {
-        console.error(error);
-      }
-
-      Notes.get(noteID, (error, note) => {
-        if (error || !note) {
-          return res.send(404, {
-            error: 'Cet identifiant est inconnu'
-          });
-        }
-        if (note.userId !== authUser._id) {
-          return res.send(403, {
-            error: 'Accès non autorisé à cette note'
-          });
-        }
-
-        Notes.patch(note._id, req.body.content, (error, note) => {
-          if (error || !note) {
-            return res.send(500, 'Impossible de modifier la note');
-          }
-          return res.send(200, {
-            error: null,
-            note: note.value
-          });
-        });
+      return res.send(200, {
+        error: null,
+        note: note
       });
     });
   });
