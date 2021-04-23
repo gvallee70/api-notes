@@ -1,7 +1,7 @@
 const restify = require('restify');
 
 const database = require('./database');
-const User = require('./models/user');
+const UserController = require('./controllers/user-controller');
 const NotesController = require('./controllers/notes-controller');
 
 require('dotenv').config();
@@ -17,23 +17,16 @@ const app = restify.createServer();
   app.post('/signup', async (req, res) => {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.send(400, {
-        error: 'Saisissez un identifiant et un mot de passe'
-      });
-    }
-
-    User.signup(username, password, (statusCode, errorMessage, token) => {
-      if (statusCode == 200) {
-        return res.send(200, {
-          error: errorMessage,
-          token: token
-        });
-      } else {
+    UserController.signup(username, password, (statusCode, errorMessage, token) => {
+      if (statusCode !== 200) {
         return res.send(statusCode, {
           error: errorMessage
         });
       }
+      return res.send(200, {
+        error: null,
+        token: token
+      });
     });
   })
 
@@ -41,23 +34,16 @@ const app = restify.createServer();
   app.post('/signin', (req, res) => {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.send(400, {
-        error: 'Saisissez un identifiant et un mot de passe'
-      });
-    }
-
-    User.signin(username, password, (statusCode, errorMessage, token) => {
-      if (statusCode == 200) {
-        return res.send(200, {
-          error: errorMessage,
-          token: token
-        });
-      } else {
+    UserController.signin(username, password, (statusCode, errorMessage, token) => {
+      if (statusCode !== 200) {
         return res.send(statusCode, {
           error: errorMessage
         });
       }
+      return res.send(200, {
+        error: null,
+        token: token
+      });
     });
   });
   
