@@ -89,38 +89,19 @@ const ObjectID = require('mongodb').ObjectID;
   });
 
   // Add note
-  app.put('/notes', async(req,res) => {
-    
+  app.put('/notes', (req, res) => {
     let token = req.header('x-access-token');
+    let noteContent = req.body.content || '';
 
-    if(!token){
-      return res.send(401, {
-        error: "Utilisateur non connecté"
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
-      if(err || !decoded){
-        return res.send(401, {
-          error: "Utilisateur non connecté"
+    NotesController.addNote(token, noteContent, (statusCode, errorMessage, note) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-
-      const content = req.body.content ? req.body.content : null;
-      const userID = decoded._id;
-
-      Notes.add(content, userID, (err, note) => {
-        if(err){
-          return res.send(500, {
-            error : "Impossible de créer la note"
-          })
-        }
-        if (note) {
-          res.send(200, {
-            error: null,
-            note: note
-          });
-        }
+      return res.send(200, {
+        error: null,
+        note: note
       });
     });
   });

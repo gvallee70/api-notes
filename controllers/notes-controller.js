@@ -26,4 +26,27 @@ NotesController.getNotes = (token, callback) => {
   });
 };
 
+NotesController.addNote = (token, noteContent, callback) => {
+  if (!token) {
+    return callback(401, 'Utilisateur non connecté');
+  }
+
+  jwt.verify(token, process.env.JWT_KEY, (error, decoded) => {
+    if (error || !decoded) {
+      return callback(401, 'Utilisateur non connecté');
+    }
+
+    const userID = decoded._id;
+
+    Notes.add(noteContent, userID, (error, note) => {
+      if (error) {
+        return callback(500, 'Impossible de créer la note');
+      }
+      if (note) {
+        return callback(200, null, note);
+      }
+    });
+  });
+};
+
 module.exports = NotesController
