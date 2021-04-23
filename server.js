@@ -87,8 +87,8 @@ const ObjectID = require('mongodb').ObjectID;
         });
       }
       let userId = decoded._id;
-      
-      Notes.get(userId, (err, notes) => {
+
+      Notes.getAll(userId, (err, notes) => {
         if(err){
           return res.send(500, {
             error : err
@@ -140,12 +140,9 @@ const ObjectID = require('mongodb').ObjectID;
     });
   });
 
-
-  //Patch note
-
+  // Patch note
   app.patch('/notes/:id', (req,res) =>{
     let token = req.header('x-access-token');
-
 
     if(!token){
       return res.send(401, {
@@ -160,54 +157,50 @@ const ObjectID = require('mongodb').ObjectID;
         });
       }
 
-      let note;
+      let noteID;
       try {
-        const _id = new ObjectID(req.params.id)
-        note = await notesCollection.findOne({ _id: _id })
-      } catch (err) {
-        console.log(err)
+        noteID = new ObjectID(req.params.id);
+      } catch(error) {
+        console.error(error);
       }
 
-      if (!note) {
-        return res.send(404, { 
-          error: 'Cet identifiant est inconnu'
-        })
-      }
+      Notes.get(noteID, (error, note) => {
+        if (error || !note) {
+          return res.send(404, {
+            error: 'Cet identifiant est inconnu'
+          });
+        }
+        if (note.userId !== authUser._id) {
+          return res.send(403, {
+            error: 'Accès non autorisé à cette note'
+          });
+        }
 
-      if (note.userId !== authUser._id) {
-        return res.send(403, { 
-          error: 'Accès non autorisé à cette note'
-        })
-      }
-
-      notesCollection.findOneAndUpdate({_id:note._id}, {
-        $set:{
-          content:req.body.content,
-          lastUpdatedAt:new Date()
+        Notes.patch(note._id, req.body.content, (error, note) => {
+          if (error || !note) {
+            return res.send(500, 'Impossible de modifier la note');
           }
-        },
-        {
-          returnOriginal: false
-        }, ((err, updatedNote) => {
-          if(err){
-            return res.send(500, {
-              error : "Impossible de modifier la note"
-            })
-          }
+          return res.send(200, {
+            error: null,
+            note: note.value
+          });
+        });
+      });
 
-          if (updatedNote) {
-            return res.send(200, {
-              error: null,
-              note: updatedNote.value          
-            });
-          }
-
-
-        }))
+      // try {
+      //   const _id = new ObjectID(req.params.id)
+      //   note = await notesCollection.findOne({ _id: _id })
+      // } catch (err) {
+      //   console.log(err)
+      // }
+      //
+      // if (!note) {
+      //   return res.send(404, {
+      //     error: ''
+      //   })
+      // }
     });
-
-  })
-
+  });
 
   // Delete note
   app.del('/notes/:id', (req, res) => {
