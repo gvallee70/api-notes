@@ -1,25 +1,15 @@
-const database = require('./database');
-const Notes = require('./models/notes');
-const User = require('./models/user');
+const restify = require('restify');
 
+const database = require('./database');
+const User = require('./models/user');
 const NotesController = require('./controllers/notes-controller');
 
 require('dotenv').config();
-const rjwt = require('restify-jwt-community');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-
-const restify = require('restify');
 
 const app = restify.createServer();
 
-const ObjectID = require('mongodb').ObjectID;
-
 (async () => {
   await database.connect();
-
-  const usersCollection = database.db.collection('users');
-  const notesCollection = database.db.collection('notes');
 
   app.use(restify.plugins.bodyParser());
 
@@ -127,57 +117,13 @@ const ObjectID = require('mongodb').ObjectID;
 
   // Delete note
   app.del('/notes/:id', (req, res) => {
-    let token = req.header('x-access-token');
+    const token = req.header('x-access-token');
+    const noteID = req.params.id;
 
-    if (!token) {
-      return res.send(401, {
-        error: 'Utilisateur non connecté'
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY,async (err, authUser) => {
-      if (err) {
-        return res.send(500, {
-          error: 'Impossible de vous authentifier'
-        });
-      }
-      if (!authUser) {
-        return res.send(401, {
-          error: 'Utilisateur non connecté'
-        });
-      }
-
-      let note;
-      try {
-        const _id = new ObjectID(req.params.id)
-        note = await notesCollection.findOne({ _id: _id })
-      } catch (err) {
-        console.log(err)
-      }
-
-      if (!note) {
-        return res.send(404, { 
-          error: 'Cet identifiant est inconnu'
-        })
-      }
-
-      if (note.userId !== authUser._id) {
-        return res.send(403, { 
-          error: 'Accès non autorisé à cette note'
-        })
-      }
-
-      Notes.delete(note._id, (error) => {
-        if (error) {
-          return res.send(500, {
-            error: 'Impossible de supprimer la note.'
-          });
-        } else {
-          return res.send(200, {
-            error: null
-          });
-        }
-      });
+    NotesController.deleteNote(token, noteID, (statusCode, errorMessage) => {
+      return res.send(statusCode, {
+        error: errorMessage
+      })
     });
   });
 

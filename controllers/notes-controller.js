@@ -85,4 +85,39 @@ NotesController.modifyNote = (token, noteID, noteContent, callback) => {
   });
 };
 
+NotesController.deleteNote = (token, noteID, callback) => {
+  if (!token) {
+    return callback(401, 'Utilisateur non connecté');
+  }
+
+  jwt.verify(token, process.env.JWT_KEY, async (error, authUser) => {
+    if (error || !authUser) {
+      return callback(401, 'Utilisateur non connecté');
+    }
+
+    let formattedNoteID;
+    try {
+      formattedNoteID = new ObjectID(noteID);
+    } catch(error) {
+      return callback(404, 'Cet identifiant est inconnu');
+    }
+
+    Notes.get(formattedNoteID, (error, note) => {
+      if (error || !note) {
+        return callback(404, 'Cet identifiant est inconnu');
+      }
+      if (note.userId !== authUser._id) {
+        return callback(403, 'Accès non autorisé à cette note');
+      }
+
+      Notes.delete(note._id, (error) => {
+        if (error) {
+          return callback(500, 'Impossible de supprimer la note.');
+        }
+        return callback(200);
+      });
+    });
+  });
+};
+
 module.exports = NotesController
