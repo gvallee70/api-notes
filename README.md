@@ -1,29 +1,28 @@
 # API-note
+
 #### This is an HTTP API made with Restify for managing personal notes.
 
 ## Get started
 
-##### Clone project
-```$ git clone git@github.com:nguyen.1909/API-note.git```<br/>
-``` $ cd API-note ```
+#### Clone project
 
-`$ git clone git@github.com:nguyen.1909/API-note.git`
+`$ git clone git@github.com:nguyen.1909/API-note.git`<br/>
 `$ cd API-note`
 
-##### Install the dependencies
+#### Install the dependencies
 
 `$ npm install`
 
-##### Run project
-``` $ npm start ``` or  ``` $ npm run dev ```<br/> 
+#### Run project
 
-`$ npm start` or `$ npm run dev`
+`$ npm start` or `$ npm run dev`<br/>
 
-## Environment 
+## Environment
+
 **The API is deployed with [Heroku](https://www.heroku.com) on https://api-note-3moc.herokuapp.com/**<br/>
-*GitHub integration is enabled, so the API is automatically re-deployed on Heroku when there is a new push on `main`*
+_GitHub integration is enabled, so the API is automatically re-deployed on Heroku when there is a new push on `main`_
 
-#### Environment variables
+### Environment variables
 
 - `PORT`: port on which the server will listen requests, default `8080`
 - `MONGODB_URI`: URI for MongoDB database connexion
@@ -32,9 +31,8 @@
 
 ## Tests
 
-## Tests
-Automatic tests have been written with [Mocha](https://mochajs.org/). 
-You can execute them by running :
+Automatic tests have been written with [Mocha](https://mochajs.org/).
+You can execute them by running : <br/>
 `$ npm test `
 
 ## Routes API
@@ -47,7 +45,7 @@ You can execute them by running :
 
 - `username` (Between 2 and 20 characters, in lowercase, without special characters)
 - `password` (Minimum 4 characters)
-<br/>
+  <br/>
 
 #### POST /signin
 
@@ -56,8 +54,8 @@ You can execute them by running :
 ###### Body
 
 - `username` (Between 2 and 20 characters, in lowercase, without special characters)
-- `password` (Minimum 4 characters) 
-<br/>
+- `password` (Minimum 4 characters)
+  <br/>
 
 #### GET /notes
 
@@ -66,7 +64,7 @@ You can execute them by running :
 ###### Headers
 
 - `x-access-token` (JWT token)
-<br/>
+  <br/>
 
 #### PUT /notes
 
@@ -79,7 +77,7 @@ You can execute them by running :
 ###### Headers
 
 - `x-access-token` (JWT token)
-<br/>
+  <br/>
 
 #### PATCH /notes/:id
 
@@ -92,13 +90,11 @@ You can execute them by running :
 ###### Body
 
 - `content` (Note content)
-###### Headers 
-- `x-access-token` (JWT token)
-<br/>  
 
 ###### Headers
 
 - `x-access-token` (JWT token)
+  <br/>
 
 #### DELETE /notes/id
 
