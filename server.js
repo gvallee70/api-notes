@@ -1,21 +1,15 @@
+const restify = require('restify');
+
 const database = require('./database');
-const Notes = require('./models/notes');
-const User = require('./models/user');
+const UserController = require('./controllers/user-controller');
+const NotesController = require('./controllers/notes-controller');
 
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
-
-const restify = require('restify');
 
 const app = restify.createServer();
 
-const ObjectID = require('mongodb').ObjectID;
-
 (async () => {
   await database.connect();
-
-  const usersCollection = database.db.collection('users');
-  const notesCollection = database.db.collection('notes');
 
   app.use(restify.plugins.bodyParser());
 
@@ -23,23 +17,16 @@ const ObjectID = require('mongodb').ObjectID;
   app.post('/signup', async (req, res) => {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.send(400, {
-        error: 'Saisissez un identifiant et un mot de passe'
-      });
-    }
-
-    User.signup(username, password, (statusCode, errorMessage, token) => {
-      if (statusCode == 200) {
-        return res.send(200, {
-          error: errorMessage,
-          token: token
-        });
-      } else {
+    UserController.signup(username, password, (statusCode, errorMessage, token) => {
+      if (statusCode !== 200) {
         return res.send(statusCode, {
           error: errorMessage
         });
       }
+      return res.send(200, {
+        error: null,
+        token: token
+      });
     });
   })
 
@@ -47,211 +34,86 @@ const ObjectID = require('mongodb').ObjectID;
   app.post('/signin', (req, res) => {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.send(400, {
-        error: 'Saisissez un identifiant et un mot de passe'
-      });
-    }
-
-    User.signin(username, password, (statusCode, errorMessage, token) => {
-      if (statusCode == 200) {
-        return res.send(200, {
-          error: errorMessage,
-          token: token
-        });
-      } else {
+    UserController.signin(username, password, (statusCode, errorMessage, token) => {
+      if (statusCode !== 200) {
         return res.send(statusCode, {
           error: errorMessage
         });
       }
+      return res.send(200, {
+        error: null,
+        token: token
+      });
     });
   });
   
   // Get notes
-  app.get('/notes', async (req,res) => {
+  app.get('/notes', (req, res) => {
+    const token = req.header('x-access-token');
 
-    let token = req.header('x-access-token');
-
-    if(!token){
-      return res.send(401, {
-        error: 'Utilisateur non connecté'
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
-      if(err || !decoded){
-        return res.send(401, {
-          error: 'Utilisateur non connecté'
+    NotesController.getNotes(token, (statusCode, errorMessage, notes) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-      let userId = decoded._id;
-
-      Notes.getAll(userId, (err, notes) => {
-        if(err){
-          return res.send(500, {
-            error : err
-          });
-        }
-        return res.send(200, {
-          error : null,
-          notes : notes
-        });
+      return res.send(200, {
+        error: null,
+        notes: notes
       });
     });
-    
   });
 
   // Add note
-  app.put('/notes', async(req,res) => {
-    
-    let token = req.header('x-access-token');
+  app.put('/notes', (req, res) => {
+    const token = req.header('x-access-token');
+    const noteContent = req.body.content || '';
 
-    if(!token){
-      return res.send(401, {
-        error: 'Utilisateur non connecté'
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
-      if(err || !decoded){
-        return res.send(401, {
-          error: 'Utilisateur non connecté'
+    NotesController.addNote(token, noteContent, (statusCode, errorMessage, note) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-
-      const content = req.body.content ? req.body.content : null;
-      const userID = decoded._id;
-
-      Notes.add(content, userID, (err, note) => {
-        if(err){
-          return res.send(500, {
-            error : 'Impossible de créer la note'
-          })
-        }
-        if (note) {
-          res.send(200, {
-            error: null,
-            note: note
-          });
-        }
+      return res.send(200, {
+        error: null,
+        note: note
       });
     });
   });
 
   // Patch note
   app.patch('/notes/:id', (req,res) =>{
-    let token = req.header('x-access-token');
+    const token = req.header('x-access-token');
+    const noteID = req.params.id;
+    const noteContent = req.body.content;
 
-    if(!token){
-      return res.send(401, {
-        error: 'Utilisateur non connecté'
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY, async (err,authUser) => {
-      if(err){
-        return res.send(401, {
-          error: 'Utilisateur non connecté'
+    NotesController.modifyNote(token, noteID, noteContent, (statusCode, errorMessage, note) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-
-      let noteID;
-      try {
-        noteID = new ObjectID(req.params.id);
-      } catch(error) {
-        console.error(error);
-      }
-
-      Notes.get(noteID, (error, note) => {
-        if (error || !note) {
-          return res.send(404, {
-            error: 'Cet identifiant est inconnu'
-          });
-        }
-        if (note.userId !== authUser._id) {
-          return res.send(403, {
-            error: 'Accès non autorisé à cette note'
-          });
-        }
-
-        Notes.patch(note._id, req.body.content, (error, note) => {
-          if (error || !note) {
-            return res.send(500, 'Impossible de modifier la note');
-          }
-          return res.send(200, {
-            error: null,
-            note: note.value
-          });
-        });
+      return res.send(200, {
+        error: null,
+        note: note
       });
-
-      // try {
-      //   const _id = new ObjectID(req.params.id)
-      //   note = await notesCollection.findOne({ _id: _id })
-      // } catch (err) {
-      //   console.log(err)
-      // }
-      //
-      // if (!note) {
-      //   return res.send(404, {
-      //     error: ''
-      //   })
-      // }
     });
   });
 
   // Delete note
   app.del('/notes/:id', (req, res) => {
-    let token = req.header('x-access-token');
+    const token = req.header('x-access-token');
+    const noteID = req.params.id;
 
-    if (!token) {
-      return res.send(401, {
-        error: 'Utilisateur non connecté'
-      });
-    }
-
-    jwt.verify(token, process.env.JWT_KEY,async (err, authUser) => {
-      if (err) {
-        return res.send(500, {
-          error: 'Impossible de vous authentifier'
+    NotesController.deleteNote(token, noteID, (statusCode, errorMessage) => {
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
         });
       }
-      if (!authUser) {
-        return res.send(401, {
-          error: 'Utilisateur non connecté'
-        });
-      }
-
-      let note;
-      try {
-        const _id = new ObjectID(req.params.id)
-        note = await notesCollection.findOne({ _id: _id })
-      } catch (err) {
-        console.log(err)
-      }
-
-      if (!note) {
-        return res.send(404, { 
-          error: 'Cet identifiant est inconnu'
-        })
-      }
-
-      if (note.userId !== authUser._id) {
-        return res.send(403, { 
-          error: 'Accès non autorisé à cette note'
-        })
-      }
-
-      Notes.delete(note._id, (error) => {
-        if (error) {
-          return res.send(500, {
-            error: 'Impossible de supprimer la note.'
-          });
-        } else {
-          return res.send(200, {
-            error: null
-          });
-        }
+      return res.send(200, {
+        error: null
       });
     });
   });
