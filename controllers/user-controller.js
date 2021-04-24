@@ -4,12 +4,10 @@ require('dotenv').config();
 
 const Users = require('../models/users');
 
-const database = require('../database');
-
 const UserController = {};
 
 // Sign up
-UserController.signup = (username, password, callback) => {
+UserController.signup = async (username, password, callback) => {
   if (!username || !password) {
     return callback(400, 'Saisissez un identifiant et un mot de passe');
   }
@@ -25,12 +23,12 @@ UserController.signup = (username, password, callback) => {
     }
   });
 
-  // TODO
-  // Users.getByUsername(username, (error, user) => {
-  //   if (user) {
-  //     return callback(400, 'Cet identifiant est déjà associé à un compte');
-  //   }
-  // });
+  const users = await Users.getAll();
+  for (const user of users) {
+    if (user.username === username) {
+      return callback(400, 'Cet identifiant est déjà associé à un compte');
+    }
+  }
 
   const user = {
     username: username,
@@ -47,7 +45,7 @@ UserController.signup = (username, password, callback) => {
 };
 
 // Sign in
-UserController.signin = (username, password, callback) => {
+UserController.signin = async (username, password, callback) => {
   if (!username || !password) {
     return callback(400, 'Saisissez un identifiant et un mot de passe');
   }
@@ -63,21 +61,21 @@ UserController.signin = (username, password, callback) => {
     }
   });
 
-  const usersCollection = database.db.collection('users');
+  const users = await Users.getAll();
+  for (const user of users) {
+    if (user.username === username) {
+      if (!bcrypt.compareSync(password, user.password)) {
+        return callback(400, 'Mot de passe invalide');
+      }
 
-  usersCollection.findOne({ username }, (error, user) => { // TODO - To be replaced with the same method used line 29 (when it will be fixed)
-    if (error || !user) {
-      return callback(403, 'Cet identifiant est inconnu');
+      let token = jwt.sign(user, process.env.JWT_KEY, {
+        expiresIn: '24h'
+      });
+      return callback(200, null, token);
     }
-    if (!bcrypt.compareSync(password, user.password)) {
-      return callback(400, 'Mot de passe invalide');
-    }
+  }
 
-    let token = jwt.sign(user, process.env.JWT_KEY, {
-      expiresIn: '24h'
-    });
-    return callback(200, null, token);
-  });
+  return callback(403, 'Cet identifiant est inconnu');
 };
 
 checkUsername = (username, callback) => {

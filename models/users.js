@@ -2,19 +2,10 @@ const database = require('../database');
 
 const Users = {};
 
-// Get user
-Users.getByUsername = (username, callback) => {
+// Get users
+Users.getAll = async () => {
   const usersCollection = database.db.collection('users');
-
-  usersCollection.find({
-    username: username
-  }).toArray((error, users) => {
-    if (users[0]) {
-      return callback(error, users[0]);
-    } else {
-      return callback(error);
-    }
-  });
+  return await usersCollection.find().toArray();
 }
 
 // Insert user
