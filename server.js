@@ -107,9 +107,14 @@ const app = restify.createServer();
     const noteID = req.params.id;
 
     NotesController.deleteNote(token, noteID, (statusCode, errorMessage) => {
-      return res.send(statusCode, {
-        error: errorMessage
-      })
+      if (statusCode !== 200) {
+        return res.send(statusCode, {
+          error: errorMessage
+        });
+      }
+      return res.send(200, {
+        error: null
+      });
     });
   });
 
