@@ -1,63 +1,79 @@
 # API-note
+##### This is an HTTP API made with Restify for managing personal notes.
 
-## Short description project
-This is an HTTP API for managing personal notes.
+## Get started
+##### Clone project
+```$ git clone git@github.com:nguyen.1909/API-note.git```
+``` $ cd API-note ```
 
-## Link heroku
-https://api-note-3moc.herokuapp.com/
+##### Install the dependencies 
+``` $ npm install ```
 
-## Route API
+##### Run project
+``` $ npm start ``` or  ``` $ npm run dev ``` 
 
-#### Signup
-##### POST /signup
-###### Informations 
-- username (Between 2 and 20 character, In lowercase)
-- password (Minimum 4 character)
 
-#### Signin
-##### POST /signin
-###### Informations
-- username
-- password
+## Environment 
+**The API is deployed with [Heroku](https://www.heroku.com) on https://api-note-3moc.herokuapp.com/.**
+*GitHub integration is enabled, so the API is automatically re-deployed on Heroku when there is a new push on `main`*
 
-#### Get notes
-##### GET /notes
-###### Informations
-- x-access-token (This is the code it sends back to you when you want to log in)
+#### Environment variables
+- `PORT`: port on which the server will listen requests, default `8080`
+- `MONGODB_URI`: URI for MongoDB database connexion
+- `DB_NAME`: MongoDB database name
+- `JWT_KEY`: JWT secret key
 
-#### Add note
-##### PUT /notes
-###### Informations
-- x-access-token (This is the code it sends back to you when you want to log in)
-- content 
 
-#### Modify note
-##### PATCH /notes/:id
-###### Informations
-- id (This is the id of the note)
-- content (This is the new content)
+## Tests
+Automatic tests have been written with [Mocha](https://mochajs.org/)
+You can execute them by running :
+```$ npm test ```
 
-#### Delete note
-##### DELETE /notes/id
-###### Informations
-- id (This is the id of the note)
+## Routes API
 
-## Clone project
-git clone git@github.com:nguyen.1909/API-note.git
+#### POST /signup
+##### Request 
+###### Body 
 
-## Start project
-``` cd API-note ```
+- `username` (Between 2 and 20 characters, in lowercase, without special characters)
+- `password` (Minimum 4 characters)
 
-## Install the dependencies 
-``` npm install ```
+#### POST /signin
+##### Request
+###### Body 
 
-## Run project
+- `username` (Between 2 and 20 characters, in lowercase, without special characters)
+- `password` (Minimum 4 characters)
 
-#### To run the project in production mode
-- ``` npm start ```
+#### GET /notes
+##### Request
+###### Headers 
+- `x-access-token` (JWT token)
 
-#### To run the project in development mode
-- ```npm run dev ```
+#### PUT /notes
+##### Request
+###### Body 
+- `content` (Note content)
+###### Headers 
+
+- `x-access-token` (JWT token)
+
+#### PATCH /notes/:id
+##### Request
+###### Parameters 
+- `id` (Note ID)
+###### Body 
+- `content` (Note content)
+###### Headers 
+- `x-access-token` (JWT token)  
+
+#### DELETE /notes/id
+##### Request
+###### Parameters 
+- `id` (Note ID)
+###### Headers 
+- `x-access-token` (JWT token)
+
 
 ## Contributor
 - NGUYEN David
