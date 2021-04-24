@@ -76,14 +76,14 @@ const ObjectID = require('mongodb').ObjectID;
 
     if(!token){
       return res.send(401, {
-        error: "Utilisateur non connecté"
+        error: 'Utilisateur non connecté'
       });
     }
 
     jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
       if(err || !decoded){
         return res.send(401, {
-          error: "Utilisateur non connecté"
+          error: 'Utilisateur non connecté'
         });
       }
       let userId = decoded._id;
@@ -110,14 +110,14 @@ const ObjectID = require('mongodb').ObjectID;
 
     if(!token){
       return res.send(401, {
-        error: "Utilisateur non connecté"
+        error: 'Utilisateur non connecté'
       });
     }
 
     jwt.verify(token, process.env.JWT_KEY, (err,decoded) => {
       if(err || !decoded){
         return res.send(401, {
-          error: "Utilisateur non connecté"
+          error: 'Utilisateur non connecté'
         });
       }
 
@@ -127,7 +127,7 @@ const ObjectID = require('mongodb').ObjectID;
       Notes.add(content, userID, (err, note) => {
         if(err){
           return res.send(500, {
-            error : "Impossible de créer la note"
+            error : 'Impossible de créer la note'
           })
         }
         if (note) {
@@ -146,14 +146,14 @@ const ObjectID = require('mongodb').ObjectID;
 
     if(!token){
       return res.send(401, {
-        error: "Utilisateur non connecté"
+        error: 'Utilisateur non connecté'
       });
     }
 
     jwt.verify(token, process.env.JWT_KEY, async (err,authUser) => {
       if(err){
         return res.send(401, {
-          error: "Utilisateur non connecté"
+          error: 'Utilisateur non connecté'
         });
       }
 
