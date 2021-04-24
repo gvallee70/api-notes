@@ -11,11 +11,11 @@ npm install
 
 ## Run project
 
-- To run the project in production mode
-npm start
+#### To run the project in production mode
+- npm start
 
-- To run the project in development mode
-npm run dev
+#### To run the project in development mode
+- npm run dev
 
 ## Contributor
 
