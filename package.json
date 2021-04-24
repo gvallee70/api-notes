@@ -24,11 +24,9 @@
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.6",
     "node-fetch": "^2.6.1",
-    "restify": "^8.5.1",
-    "restify-jwt-community": "^1.1.12"
+    "restify": "^8.5.1"
   },
   "devDependencies": {
-    "form-data": "^4.0.0",
     "mocha": "^8.3.2",
     "nodemon": "^2.0.7"
   }

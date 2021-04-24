@@ -5,7 +5,7 @@ const tests = require('./asserts');
 
 describe("le serveur devrait", () => {
     it('retourner un code 401 avec le message \'Utilisateur non connecté\' quand il reçoit une requête HTTP PATCH /notes/:id et que l\'utilisateur n\'est pas connecté', async () => {
-        const patchNoteResponse = await notes.patch(1, null, 'Contenu test')
+        const patchNoteResponse = await notes.patch(1, null)
         const patchNoteResponseJson = await patchNoteResponse.json()
 
         tests.testError401Response(patchNoteResponse.status, patchNoteResponseJson.error)
@@ -16,7 +16,7 @@ describe("le serveur devrait", () => {
         const signinResponse = await user.signin('test', 'test')
         const signinResponseJson = await signinResponse.json() 
 
-        const patchNoteResponse = await notes.patch(1, signinResponseJson.token, 'Contenu test')
+        const patchNoteResponse = await notes.patch(1, signinResponseJson.token)
         const patchNoteResponseJson = await patchNoteResponse.json()
 
         tests.testError404Response(patchNoteResponse.status, patchNoteResponseJson.error)
@@ -36,7 +36,7 @@ describe("le serveur devrait", () => {
         const signinOtherUserJson = await signinOtherUserResponse.json()
 
         const patchNoteResponse = await notes.patch(getNotesResponseJson.notes[0]._id
-            ,signinOtherUserJson.token, 'Contenu test')
+            ,signinOtherUserJson.token)
         const patchNoteResponseJson = await patchNoteResponse.json()
 
         tests.testError403Response(patchNoteResponse.status, patchNoteResponseJson.error)
@@ -51,7 +51,7 @@ describe("le serveur devrait", () => {
         const getNotesResponseJson = await getNotesResponse.json()
 
         const patchNoteResponse = await notes.patch(getNotesResponseJson.notes[0]._id
-            ,signinResponseJson.token, 'Contenu test')
+            ,signinResponseJson.token)
         const patchNoteResponseJson = await patchNoteResponse.json()
 
         tests.testSuccessResponse(patchNoteResponse.status, patchNoteResponseJson.error)

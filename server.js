@@ -3,9 +3,7 @@ const Notes = require('./models/notes');
 const User = require('./models/user');
 
 require('dotenv').config();
-const rjwt = require('restify-jwt-community');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 
 const restify = require('restify');
 
