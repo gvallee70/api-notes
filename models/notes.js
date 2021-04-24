@@ -21,6 +21,9 @@ Notes.get = (noteID, callback) => {
     .find({
       _id: noteID
     })
+    .sort({
+      createdAt: -1,
+    })
     .toArray((error, notes) => {
       return callback(error, notes[0])
     })
