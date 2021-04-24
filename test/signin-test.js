@@ -1,5 +1,5 @@
-const assert = require('assert');
 const user = require('./user')
+const tests = require('./asserts');
 
 
 describe("le serveur devrait", () => {
@@ -7,16 +7,14 @@ describe("le serveur devrait", () => {
         const signinResponse = await user.signin('test', 'tes')
         const signinResponseJson = await signinResponse.json()
 
-        assert.equal(signinResponse.status, 400);
-        assert.equal(signinResponseJson.error, 'Le mot de passe doit contenir au moins 4 caractères');
+        tests.testError400Response(signinResponse.status, signinResponseJson.error, 'Le mot de passe doit contenir au moins 4 caractères' )
     });
 
     it('retourner un code 400 avec le message \'Votre identifiant ne doit contenir que des lettres minuscules non accentuées\' quand il reçoit une requête HTTP POST /signin et que username contient un caractère autre que des lettres non accentuées', async () => {
         const signinResponse = await user.signin('test#', 'test')
         const signinResponseJson = await signinResponse.json()
 
-        assert.equal(signinResponse.status, 400);
-        assert.equal(signinResponseJson.error, 'Votre identifiant ne doit contenir que des lettres minuscules non accentuées');
+        tests.testError400Response(signinResponse.status, signinResponseJson.error, 'Votre identifiant ne doit contenir que des lettres minuscules non accentuées' )
     });
 
 
@@ -24,8 +22,7 @@ describe("le serveur devrait", () => {
         const signinResponse = await user.signin('t', 'test')
         const signinResponseJson = await signinResponse.json()
 
-        assert.equal(signinResponse.status, 400);
-        assert.equal(signinResponseJson.error, 'Votre identifiant doit contenir entre 2 et 20 caractères');
+        tests.testError400Response(signinResponse.status, signinResponseJson.error, 'Votre identifiant doit contenir entre 2 et 20 caractères' )
     });
 
 

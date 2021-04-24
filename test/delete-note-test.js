@@ -1,6 +1,6 @@
-const assert = require('assert');
 const user = require('./user')
 const notes = require('./notes');
+const tests = require('./asserts');
 
 
 describe("le serveur devrait", () => {
@@ -8,8 +8,7 @@ describe("le serveur devrait", () => {
         const deleteNoteResponse = await notes.delete(1)
         const deleteNoteResponseJson = await deleteNoteResponse.json()
 
-        assert.equal(deleteNoteResponse.status, 401);
-        assert.equal(deleteNoteResponseJson.error, 'Utilisateur non connecté');
+        tests.testError401Response(deleteNoteResponse.status, deleteNoteResponseJson.error)
     });
 
 
@@ -20,20 +19,18 @@ describe("le serveur devrait", () => {
         const deleteNoteResponse = await notes.delete(1, signinResponseJson.token)
         const deleteNoteResponseJson = await deleteNoteResponse.json()
 
-        assert.equal(deleteNoteResponse.status, 404);
-        assert.equal(deleteNoteResponseJson.error,  'Cet identifiant est inconnu');
+        tests.testError404Response(deleteNoteResponse.status, deleteNoteResponseJson.error)
     });
 
     
-
 
     it('retourner un code 403 avec le message \'Accès non autorisé à cette note\' quand il reçoit une requête HTTP DELETE /notes/:id et que l\'id de la note appartient à un autre utilisateur', async () => {
         const signinResponse = await user.signin('test', 'test')
         const signinResponseJson = await signinResponse.json()
 
         const getNotesResponse = await notes.getAll(signinResponseJson.token)
-
         const getNotesResponseJson = await getNotesResponse.json()
+
         const signinOtherUserResponse = await user.signin('testt', 'testt')
         const signinOtherUserResponseJson = await signinOtherUserResponse.json()
 
@@ -41,8 +38,7 @@ describe("le serveur devrait", () => {
             ,signinOtherUserResponseJson.token)
         const deleteNoteResponseJson = await deleteNoteResponse.json()
 
-        assert.equal(deleteNoteResponse.status, 403);
-        assert.equal(deleteNoteResponseJson.error,  'Accès non autorisé à cette note');
+        tests.testError403Response(deleteNoteResponse.status, deleteNoteResponseJson.error)
     });
 
 
@@ -51,17 +47,13 @@ describe("le serveur devrait", () => {
         const signinResponseJson = await signinResponse.json()
  
         const getNotesResponse = await notes.getAll(signinResponseJson.token)
-
-        const getNotesResponseJson = await getNotesResponse.json()
+         const getNotesResponseJson = await getNotesResponse.json()
 
         const deleteNoteResponse = await notes.delete(getNotesResponseJson.notes[0]._id
             ,signinResponseJson.token)
+         const deleteNoteResponseJson = await deleteNoteResponse.json()
 
-        const deleteNoteResponseJson = await deleteNoteResponse.json()
-
-        assert.equal(deleteNoteResponse.status, 200)
-        assert.equal(deleteNoteResponseJson.error, null)
-
+        tests.testSuccessResponse(deleteNoteResponse.status, deleteNoteResponseJson.error)
     });
 
 
