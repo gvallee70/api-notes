@@ -1,4 +1,4 @@
-# API-note
+# Notes API
 
 #### This is an HTTP API made with Restify for managing personal notes.
 
@@ -19,7 +19,7 @@
 
 ## Environment
 
-**The API is deployed with [Heroku](https://www.heroku.com) on https://api-note-3moc.herokuapp.com/**<br/>
+**The API is deployed with [Heroku](https://www.heroku.com) on https://api-notes-gvallee.herokuapp.com/**<br/>
 _GitHub integration is enabled, so the API is automatically re-deployed on Heroku when there is a new push on `main`_
 
 ### Environment variables
@@ -31,8 +31,9 @@ _GitHub integration is enabled, so the API is automatically re-deployed on Herok
 
 ## Tests
 
-Automatic tests have been written with [Mocha](https://mochajs.org/).
-You can execute them by running : <br/>
+Automatic tests have been written with [Mocha](https://mochajs.org/). <br/>
+You can execute them by running : 
+<br/>
 `$ npm test `
 
 ## Routes API
@@ -96,7 +97,7 @@ You can execute them by running : <br/>
 - `x-access-token` (JWT token)
   <br/>
 
-#### DELETE /notes/id
+#### DELETE /notes/:id
 
 ##### Request
 
