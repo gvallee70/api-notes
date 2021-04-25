@@ -6,8 +6,8 @@
 
 #### Clone project
 
-`$ git clone git@github.com:nguyen.1909/API-note.git`<br/>
-`$ cd API-note`
+`$ git clone git@github.com:gvallee70/api-notes.git`<br/>
+`$ cd api-notes`
 
 #### Install the dependencies
 
